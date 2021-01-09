@@ -1,0 +1,17 @@
+query AllUsers($count: Int!) {
+  AllUsers(count: $count) {
+    firstName
+    lastName
+    email
+    avatar
+  }
+}
+
+query User($id: ID!) {
+  User(id: $id) {
+    firstName
+    lastName
+    email
+    avatar
+  }
+}

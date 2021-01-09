@@ -1,9 +1,10 @@
-import { Toolbar, Typography, SvgIcon, Avatar, Box, ButtonBase, Fade } from '@material-ui/core';
+import { Toolbar, Typography, SvgIcon, Avatar, Box, ButtonBase, Fade, SvgIconTypeMap } from '@material-ui/core';
 import React, { FC, RefObject, SVGProps, useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import NoDecorLink from 'components/NoDecorLink';
 import styled, { css } from 'styled-components';
 import { ChevronLeft, ChevronRight } from '@material-ui/icons';
+import { OverridableComponent } from '@material-ui/core/OverridableComponent';
 
 // sub components
 const NonWrappingToolbar = styled(Toolbar)<{ component: keyof HTMLElementTagNameMap }>`
@@ -81,7 +82,7 @@ const RightScrollControl = styled(ButtonBase)`
 
 export type PageNavbarPropLink = {
     uri: string;
-    icon?: FC<SVGProps<SVGSVGElement> & { title?: string | undefined }> | null;
+    icon?: FC<SVGProps<SVGSVGElement> & { title?: string | undefined }> | OverridableComponent<SvgIconTypeMap<{}, "svg">> | null;
     title: string;
 }
 

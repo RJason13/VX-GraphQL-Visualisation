@@ -1,9 +1,10 @@
-import React, { FC } from "react";
+import React, { FC, Suspense } from "react";
 import { Redirect, Route, Switch as RouteSwitch, useRouteMatch } from "react-router-dom";
 import routes from './routes';
 import PageNavbar from "components/PageNavbar";
-import { Box, Container, Link, Typography } from "@material-ui/core";
+import { Box, Container, Typography } from "@material-ui/core";
 import styled from "styled-components";
+import Loading from "components/Loading";
 
 // sub components
 
@@ -26,20 +27,22 @@ const Visualisations: FC = () => {
                         <section>
                             <Container>
                                 <Typography variant="h4">
-                                    Chart 1 Title
+                                    Monthly Top 3 Topics
                                 </Typography>
                                 <Typography variant="body1">
-                                    Chart 1 Description
+                                   The most prevalent 3 topics for each month are visualised within ... chart.
                                 </Typography>
                             </Container>
                         </section>
                         <section>
                             <Container>
                                 <Typography variant="h4">
-                                    Chart 2 Title
+                                    Author's Profile
                                 </Typography>
                                 <Typography variant="body1">
-                                    Chart 2 Description
+                                    Aggregate a large-enough number of posts by their author.
+                                    Use this information to create interesting user profiles for each of the authors posting on our fictitious blog.
+                                    For example, you could explore which topics each author tends to post about the most, what their posting frequency looks like, or perhaps even explore how their topics of interest have changed across time.
                                 </Typography>
                             </Container>
                         </section>
@@ -49,8 +52,9 @@ const Visualisations: FC = () => {
                     routes.map(({ uri, component }) => {
                         const Child = component;
                         return (
-                            <Route path={`${path}${uri}`} strict exact key={uri}>
-                                <Child />
+                            <Route path={`${path}${uri}`} strict exact key={uri} component={() => {
+                                return <Suspense fallback={<Loading />} ><Child /></Suspense>;
+                              }}>
                             </Route>
                         );
                     }) 
