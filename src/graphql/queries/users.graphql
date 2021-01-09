@@ -1,5 +1,5 @@
 query AllUsers($count: Int!) {
-  AllUsers(count: $count) {
+  allUsers(count: $count) {
     firstName
     lastName
     email

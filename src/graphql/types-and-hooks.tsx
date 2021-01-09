@@ -152,6 +152,23 @@ export type Subscription = {
   todoAdded?: Maybe<Todo>;
 };
 
+export type AllPostsTopicsQueryVariables = Exact<{
+  count: Scalars['Int'];
+}>;
+
+
+export type AllPostsTopicsQuery = (
+  { __typename?: 'Query' }
+  & { allPosts?: Maybe<Array<Maybe<(
+    { __typename?: 'Post' }
+    & Pick<Post, 'published' | 'createdAt'>
+    & { likelyTopics?: Maybe<Array<Maybe<(
+      { __typename?: 'Topic' }
+      & Pick<Topic, 'label' | 'likelihood'>
+    )>>> }
+  )>>> }
+);
+
 export type AllPostsQueryVariables = Exact<{
   count: Scalars['Int'];
 }>;
@@ -172,6 +189,19 @@ export type AllPostsQuery = (
   )>>> }
 );
 
+export type AllUsersQueryVariables = Exact<{
+  count: Scalars['Int'];
+}>;
+
+
+export type AllUsersQuery = (
+  { __typename?: 'Query' }
+  & { allUsers?: Maybe<Array<Maybe<(
+    { __typename?: 'User' }
+    & Pick<User, 'firstName' | 'lastName' | 'email' | 'avatar'>
+  )>>> }
+);
+
 export type UserQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -186,6 +216,44 @@ export type UserQuery = (
 );
 
 
+export const AllPostsTopicsDocument = gql`
+    query AllPostsTopics($count: Int!) {
+  allPosts(count: $count) {
+    published
+    createdAt
+    likelyTopics {
+      label
+      likelihood
+    }
+  }
+}
+    `;
+
+/**
+ * __useAllPostsTopicsQuery__
+ *
+ * To run a query within a React component, call `useAllPostsTopicsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllPostsTopicsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllPostsTopicsQuery({
+ *   variables: {
+ *      count: // value for 'count'
+ *   },
+ * });
+ */
+export function useAllPostsTopicsQuery(baseOptions: Apollo.QueryHookOptions<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>) {
+        return Apollo.useQuery<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>(AllPostsTopicsDocument, baseOptions);
+      }
+export function useAllPostsTopicsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>) {
+          return Apollo.useLazyQuery<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>(AllPostsTopicsDocument, baseOptions);
+        }
+export type AllPostsTopicsQueryHookResult = ReturnType<typeof useAllPostsTopicsQuery>;
+export type AllPostsTopicsLazyQueryHookResult = ReturnType<typeof useAllPostsTopicsLazyQuery>;
+export type AllPostsTopicsQueryResult = Apollo.QueryResult<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>;
 export const AllPostsDocument = gql`
     query AllPosts($count: Int!) {
   allPosts(count: $count) {
@@ -229,6 +297,42 @@ export function useAllPostsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<A
 export type AllPostsQueryHookResult = ReturnType<typeof useAllPostsQuery>;
 export type AllPostsLazyQueryHookResult = ReturnType<typeof useAllPostsLazyQuery>;
 export type AllPostsQueryResult = Apollo.QueryResult<AllPostsQuery, AllPostsQueryVariables>;
+export const AllUsersDocument = gql`
+    query AllUsers($count: Int!) {
+  allUsers(count: $count) {
+    firstName
+    lastName
+    email
+    avatar
+  }
+}
+    `;
+
+/**
+ * __useAllUsersQuery__
+ *
+ * To run a query within a React component, call `useAllUsersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllUsersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllUsersQuery({
+ *   variables: {
+ *      count: // value for 'count'
+ *   },
+ * });
+ */
+export function useAllUsersQuery(baseOptions: Apollo.QueryHookOptions<AllUsersQuery, AllUsersQueryVariables>) {
+        return Apollo.useQuery<AllUsersQuery, AllUsersQueryVariables>(AllUsersDocument, baseOptions);
+      }
+export function useAllUsersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllUsersQuery, AllUsersQueryVariables>) {
+          return Apollo.useLazyQuery<AllUsersQuery, AllUsersQueryVariables>(AllUsersDocument, baseOptions);
+        }
+export type AllUsersQueryHookResult = ReturnType<typeof useAllUsersQuery>;
+export type AllUsersLazyQueryHookResult = ReturnType<typeof useAllUsersLazyQuery>;
+export type AllUsersQueryResult = Apollo.QueryResult<AllUsersQuery, AllUsersQueryVariables>;
 export const UserDocument = gql`
     query User($id: ID!) {
   User(id: $id) {

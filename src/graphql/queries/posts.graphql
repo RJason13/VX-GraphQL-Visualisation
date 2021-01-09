@@ -1,3 +1,14 @@
+query AllPostsTopics($count: Int!) {
+    allPosts(count: $count) {
+    published
+    createdAt
+    likelyTopics {
+      label
+      likelihood
+    }
+  }
+}
+
 query AllPosts($count: Int!) {
     allPosts(count: $count) {
     title
