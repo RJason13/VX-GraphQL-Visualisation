@@ -7,17 +7,7 @@ import styled from "styled-components";
 import { timeFormat, timeParse } from "d3-time-format";
 import { range, rollups } from 'd3-array';
 import { uniq } from "lodash";
-
-type TopicScore = {
-    label: string;
-    score: number;
-}
-
-type TopTopicsData = {
-    group: string;
-    topics: TopicScore[]
-}
-
+import { GroupData } from "components/HorizontalBarGroupChart/HorizontalBarGroupChart";
 
 type TopicsMap = {
     [label: string]: number
@@ -30,9 +20,9 @@ const StyledContainer = styled(Container)`
 const parseDate = timeParse('%b %Y');
 const format = timeFormat('%b %Y');
 const formatDate = (date: Date) => format(date);
-// TODO: add proper comments to codes
+// TODO: add comments to codes
 const ChartExample: FC = () => {
-    const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 1000 }});
+    const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 10000 }});
 
     // TODO: use a proper data changed indicator
     const data = useMemo(() => {
@@ -63,6 +53,7 @@ const ChartExample: FC = () => {
     }, [allPostsData]);
 
     if (loading) return <Loading />;
+    // TODO: add error handler
     // TODO: make proper fallback flow
     if (!data || data.length === 0) return null;
     const scoreMax = data.reduce((t, monthData) => 
@@ -81,7 +72,7 @@ const ChartExample: FC = () => {
                 Monthly Top 3 Topics
             </Typography>
             <BarGroupChart width={500} height={1200} 
-                getGroup={(d: TopTopicsData) => d.group}
+                getGroup={(d: GroupData) => d.group}
                 getLabel={getLabel}
                 scoreDomain={[0, scoreMax]} 
                 subgroupDomain={range(3).map(x => x.toString())}

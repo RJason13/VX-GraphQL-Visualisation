@@ -1,16 +1,28 @@
-import React, { FC } from 'react';
+import React, { useCallback } from 'react';
 import { BarGroupHorizontal, Bar } from '@vx/shape';
 import { Group } from '@vx/group';
 import { Text } from '@vx/text';
 import { AxisLeft } from '@vx/axis';
-import cityTemperature from '@vx/mock-data/lib/mocks/cityTemperature';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@vx/scale';
 import { schemeDark2, schemePaired, schemeCategory10, schemeAccent } from 'd3-scale-chromatic';
-import { uniq } from 'lodash';
-import { BarProps } from '@vx/shape/lib/shapes/Bar';
+import { round, uniq } from 'lodash';
 import { useTheme } from 'styled-components';
+import { defaultStyles, Tooltip, withTooltip } from '@vx/tooltip';
+import { localPoint } from '@vx/event';
 
-export type BarGroupHorizontalProps = {
+export type GroupData = {
+  group: string;
+  [k: string]: number | string;
+}
+
+type TooltipData = {
+  label: string;
+  color: string;
+  group: string;
+  score: number;
+};
+
+type BarGroupHorizontalProps = {
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -33,8 +45,16 @@ const colorScheme = uniq([
 const axisColor = '#e5fd3d';
 const background = '#612efb';
 const defaultMargin = { top: 20, right: 20, bottom: 20, left: 70 };
+const tooltipStyles = {
+  ...defaultStyles,
+  minWidth: 60,
+  backgroundColor: 'rgba(0,0,0,0.9)',
+  color: 'white',
+};
+  
+let tooltipTimeout: number;
 
-const HorizontalBarGroupChart: FC<BarGroupHorizontalProps> = ({
+const HorizontalBarGroupChart = withTooltip<BarGroupHorizontalProps, TooltipData>(({
   width,
   height,
   margin = defaultMargin,
@@ -44,7 +64,13 @@ const HorizontalBarGroupChart: FC<BarGroupHorizontalProps> = ({
   subgroupDomain,
   scoreDomain,
   data,
-  colorDomain
+  colorDomain,
+  tooltipOpen,
+  tooltipLeft,
+  tooltipTop,
+  tooltipData,
+  hideTooltip,
+  showTooltip
 }) => {
   const theme = useTheme();
 
@@ -63,79 +89,134 @@ const HorizontalBarGroupChart: FC<BarGroupHorizontalProps> = ({
   subgroupScale.rangeRound([0, groupScale.bandwidth()]);
   scoreScale.rangeRound([0, xMax]);
 
-  return width < 10 ? null : (
-    <svg width={width} height={height}>
-      <rect x={0} y={0} width={width} height={height} fill={background} rx={14} />
-      <Group top={margin.top} left={margin.left}>
-        <BarGroupHorizontal
-          data={data}
-          keys={subgroupDomain}
-          width={xMax}
-          y0={getGroup}
-          y0Scale={groupScale}
-          y1Scale={subgroupScale}
-          xScale={scoreScale}
-          color={(key) => key}
-        >
-          {barGroups =>
-            barGroups.map((barGroup, groupIndex) => (
-              <Group
-                key={`bar-group-horizontal-${barGroup.index}-${barGroup.y0}`}
-                top={barGroup.y0}
-              >
-                {
-                  barGroup.bars.map(bar => {
-                    const barColor = colorScale(getLabel(bar.key, groupIndex));
-                    return (
-                    <>
-                      <Bar
-                        key={`${barGroup.index}-${bar.index}-${bar.key}`}
-                        x={bar.x}
-                        y={bar.y}
-                        width={bar.width}
-                        height={bar.height}
-                        fill={barColor}
-                        rx={4}
-                        onClick={() => {
-                          if (events) alert(`${bar.key} (${bar.value}) - ${JSON.stringify(bar)}`);
-                        }}
-                      />
-                      
-                      <Text
-                        key={`label-${barGroup.index}-${bar.index}-${bar.key}`}
-                        x={bar.x}
-                        y={bar.y}
-                        dx={5}
-                        dy={bar.height/2}
-                        width={bar.width}
-                        verticalAnchor="middle"
-                        textAnchor="start"
-                        fill={theme.palette.getContrastText(barColor)}
-                      >
-                        {getLabel(bar.key, groupIndex)}
-                      </Text>
-                    </>
-                    )
-                  })
-                }
-              </Group>
-            ))
-          }
-        </BarGroupHorizontal>
-        <AxisLeft
-          scale={groupScale}
-          hideTicks
-          hideAxisLine
-          tickLabelProps={() => ({
-            fill: axisColor,
-            fontSize: 11,
-            textAnchor: 'end',
-            dy: '0.33em',
-          })}
-        />
-      </Group>
-    </svg>
+  // callbacks
+  const timeoutHideTooltip = useCallback(() => {
+    tooltipTimeout = window.setTimeout(() => {
+      hideTooltip();
+    }, 300);
+  }, [hideTooltip]);
+  const handleTooltip = useCallback(
+    (event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>) => {
+      if (tooltipTimeout) clearTimeout(tooltipTimeout);
+      const { x, y } = localPoint(event) || { x: 0, y: 0 };
+
+      const correctedY = (y-margin.top);
+
+      const groupBand = groupScale.step();
+      const subgroupBand = subgroupScale.step();
+
+      const groupIndex = Math.floor(correctedY / groupBand);
+      const group = groupScale.domain()[groupIndex];
+      const subgroupIndex = Math.floor((correctedY - (groupScale(group) as number)) / subgroupBand);
+      const subgroup = subgroupScale.domain()[subgroupIndex];
+
+      const label = getLabel(subgroup, groupIndex);
+      const barColor = colorScale(label);
+      if (label) {
+        showTooltip({
+          tooltipData: {
+            label,
+            color: barColor,
+            group,
+            score: data[groupIndex][subgroup]
+          },
+          tooltipLeft: x,
+          tooltipTop: y,
+        });
+      }
+    },
+    [colorScale, data, getLabel, groupScale, margin.top, showTooltip, subgroupScale],
   );
-}
+
+  return width < 10 ? null : (
+    <div>
+      <svg width={width} height={height}>
+        <rect x={0} y={0} width={width} height={height} fill={background} rx={14} />
+        <Group top={margin.top} left={margin.left}>
+          <BarGroupHorizontal<GroupData, string>
+            data={data}
+            keys={subgroupDomain}
+            width={xMax}
+            y0={getGroup}
+            y0Scale={groupScale}
+            y1Scale={subgroupScale}
+            xScale={scoreScale}
+            color={(key) => key}
+          >
+            {barGroups =>
+              barGroups.map((barGroup, groupIndex) => (
+                <Group
+                  key={`bar-group-horizontal-${barGroup.index}-${barGroup.y0}`}
+                  top={barGroup.y0}
+                >
+                  {
+                    barGroup.bars.map(bar => {
+                      const label = getLabel(bar.key, groupIndex);
+                      const barColor = colorScale(label);
+                      return (
+                      <React.Fragment key={`${barGroup.index}-${bar.index}-${bar.key}`}>
+                        <Bar
+                          x={bar.x}
+                          y={bar.y}
+                          width={bar.width}
+                          height={bar.height}
+                          fill={barColor}
+                          rx={4}
+                          onClick={() => {
+                            if (events) alert(`${bar.key} (${bar.value}) - ${JSON.stringify(bar)}`);
+                          }}
+                          onTouchStart={handleTooltip}
+                          onTouchMove={handleTooltip}
+                          onMouseMove={handleTooltip}
+                          onMouseLeave={timeoutHideTooltip}
+                        />
+                        
+                        <Text
+                          x={bar.x}
+                          y={bar.y}
+                          dx={5}
+                          dy={bar.height/2}
+                          width={bar.width}
+                          verticalAnchor="middle"
+                          textAnchor="start"
+                          fill={theme.palette.getContrastText(barColor)}
+                        >
+                          {label}
+                        </Text>
+                      </React.Fragment>
+                      )
+                    })
+                  }
+                </Group>
+              ))
+            }
+          </BarGroupHorizontal>
+          <AxisLeft
+            scale={groupScale}
+            hideTicks
+            hideAxisLine
+            tickLabelProps={() => ({
+              fill: axisColor,
+              fontSize: 11,
+              textAnchor: 'end',
+              dy: '0.33em',
+            })}
+          />
+        </Group>
+      </svg>
+      {tooltipOpen && tooltipData && (
+        <Tooltip top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
+          <div style={{ color: colorScale(tooltipData.color) }}>
+            <strong>{tooltipData.label}</strong>
+          </div>
+          <div>{`score: ${round(tooltipData.score, 2)}`}</div>
+          <div>
+            <small>{tooltipData.group}</small>
+          </div>
+        </Tooltip>
+      )}
+    </div>
+  );
+});
 
 export default HorizontalBarGroupChart;
