@@ -2,10 +2,8 @@ import React from 'react';
 import { BarGroupHorizontal, Bar } from '@vx/shape';
 import { Group } from '@vx/group';
 import { AxisLeft } from '@vx/axis';
-import cityTemperature, { CityTemperature } from '@vx/mock-data/lib/mocks/cityTemperature';
+import cityTemperature from '@vx/mock-data/lib/mocks/cityTemperature';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@vx/scale';
-import { timeParse, timeFormat } from 'd3-time-format';
-import { blue, purple } from '@material-ui/core/colors';
 import { schemeDark2, schemePaired, schemeCategory10, schemeAccent } from 'd3-scale-chromatic';
 import { uniq } from 'lodash';
 
@@ -14,10 +12,11 @@ export type BarGroupHorizontalProps = {
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
   events?: boolean;
-  getDate: (d: any) => string
+  getGroup: (d: any) => string;
+  subgroupDomain: string[];
+  scoreDomain: [number, number];
+  data: any[]
 };
-
-type CityName = 'New York' | 'San Francisco' | 'Austin';
 
 const colorScheme = uniq([
   ...schemeDark2,
@@ -30,48 +29,44 @@ const green = '#e5fd3d';
 const background = '#612efb';
 const defaultMargin = { top: 20, right: 20, bottom: 20, left: 70 };
 
-const parseDate = timeParse('%Y-%m-%d');
-const format = timeFormat('%b %Y');
-const formatDate = (date: string) => format(parseDate(date) as Date);
-function max<D>(arr: D[], fn: (d: D) => number) {
-  return Math.max(...arr.map(fn));
-}
-
 const data = cityTemperature.slice(0, 4);
-const keys = Object.keys(data[0]).filter(d => d !== 'date') as CityName[];
+console.log(data)
 
-export default function Example({
+const HorizontalBarGroupChart = ({
   width,
   height,
   margin = defaultMargin,
   events = false,
-  getDate
-}: BarGroupHorizontalProps) {
+  getGroup,
+  subgroupDomain,
+  scoreDomain,
+  data
+}: BarGroupHorizontalProps) => {
   // bounds
   const xMax = width - margin.left - margin.right;
   const yMax = height - margin.top - margin.bottom;
 
   // scales
-  const dateScale = scaleBand({
-    domain: data.map(getDate),
+  const groupScale = scaleBand({
+    domain: data.map(getGroup),
     padding: 0.2,
   });
-  const cityScale = scaleBand({
-    domain: keys,
+  const subgroupScale = scaleBand({
+    domain: subgroupDomain,
     padding: 0.1,
   });
-  const tempScale = scaleLinear<number>({
-    domain: [0, max(data, d => max(keys, key => Number(d[key])))],
+  const scoreScale = scaleLinear<number>({
+    domain: scoreDomain,
   });
   const colorScale = scaleOrdinal<string, string>({
-    domain: keys,
+    domain: subgroupDomain,
     range: colorScheme,
   });
 
   // update scale output dimensions
-  dateScale.rangeRound([0, yMax]);
-  cityScale.rangeRound([0, dateScale.bandwidth()]);
-  tempScale.rangeRound([0, xMax]);
+  groupScale.rangeRound([0, yMax]);
+  subgroupScale.rangeRound([0, groupScale.bandwidth()]);
+  scoreScale.rangeRound([0, xMax]);
 
   console.log(data);
 
@@ -81,12 +76,12 @@ export default function Example({
       <Group top={margin.top} left={margin.left}>
         <BarGroupHorizontal
           data={data}
-          keys={keys}
+          keys={subgroupDomain}
           width={xMax}
-          y0={getDate}
-          y0Scale={dateScale}
-          y1Scale={cityScale}
-          xScale={tempScale}
+          y0={getGroup}
+          y0Scale={groupScale}
+          y1Scale={subgroupScale}
+          xScale={scoreScale}
           color={colorScale}
         >
           {barGroups =>
@@ -114,10 +109,9 @@ export default function Example({
           }
         </BarGroupHorizontal>
         <AxisLeft
-          scale={dateScale}
+          scale={groupScale}
           stroke={green}
           tickStroke={green}
-          tickFormat={formatDate}
           hideAxisLine
           tickLabelProps={() => ({
             fill: green,
@@ -130,3 +124,5 @@ export default function Example({
     </svg>
   );
 }
+
+export default HorizontalBarGroupChart;
