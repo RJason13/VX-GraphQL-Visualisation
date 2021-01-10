@@ -1,11 +1,10 @@
-import { Container } from "@material-ui/core";
+import { Container, Typography } from "@material-ui/core";
 import BarGroupChart from "components/HorizontalBarGroupChart";
 import Loading from "components/Loading";
 import { useAllPostsQuery } from "graphql/types-and-hooks";
 import React, { FC, useMemo } from "react";
 import styled from "styled-components";
-import { timeFormat } from "d3-time-format";
-import { add, endOfMonth, isBefore, startOfMonth } from "date-fns";
+import { timeFormat, timeParse } from "d3-time-format";
 import { range, rollups } from 'd3-array';
 import { uniq } from "lodash";
 
@@ -28,11 +27,12 @@ const StyledContainer = styled(Container)`
     text-align: center;
 `;
 
+const parseDate = timeParse('%b %Y');
 const format = timeFormat('%b %Y');
 const formatDate = (date: Date) => format(date);
 // TODO: add proper comments to codes
 const ChartExample: FC = () => {
-    const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 200 }});
+    const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 1000 }});
 
     // TODO: use a proper data changed indicator
     const data = useMemo(() => {
@@ -58,7 +58,7 @@ const ChartExample: FC = () => {
             post => formatDate(new Date(parseInt(post?.createdAt as string)))
         );
         return data
-            .sort((a,b) => parseInt(b[0]) - parseInt(a[0]))
+            .sort((a,b) => (parseDate(b[0]) as Date).getTime() - (parseDate(a[0]) as Date).getTime())
             .map(x => ({ group: x[0], topics: x[1] }));
     }, [allPostsData]);
 
@@ -71,16 +71,22 @@ const ChartExample: FC = () => {
         , t)
     ,0);
 
-    const subgroupDomain = uniq(data.map(x => x.topics).flat().map(x => x.label));
-    console.log(data.map(x => ({ group: x.group, ...x.topics.reduce((t, topic) => ({ ...t, [topic.label]: topic.score }), {}) })))
+    const labelMap = data.map(x => x.topics.map(x => x.label));
+    const getLabel = (key: string, index: number) => labelMap[index][parseInt(key)];
+    const colorDomain = uniq(data.map(x => x.topics).flat().map(x => x.label));
     // TODO: make chart width dynamic
     return (
         <StyledContainer maxWidth="md">
-            <BarGroupChart width={500} height={800} 
-                getGroup={(d: TopTopicsData) => d.group} 
+            <Typography variant="h5">
+                Monthly Top 3 Topics
+            </Typography>
+            <BarGroupChart width={500} height={1200} 
+                getGroup={(d: TopTopicsData) => d.group}
+                getLabel={getLabel}
                 scoreDomain={[0, scoreMax]} 
-                subgroupDomain={subgroupDomain} 
-                data={data.map(x => ({ group: x.group, ...x.topics.reduce((t, topic) => ({ ...t, [topic.label]: topic.score }), {}) }))} />
+                subgroupDomain={range(3).map(x => x.toString())}
+                colorDomain={colorDomain}
+                data={data.map(x => ({ group: x.group, ...Object.assign({}, x.topics.map(x=>x.score)) }))} />
         </StyledContainer>
     );
 }

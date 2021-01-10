@@ -2816,7 +2816,7 @@
     lodash "^4.17.15"
     prop-types "^15.5.10"
 
-"@vx/text@0.0.199":
+"@vx/text@0.0.199", "@vx/text@^0.0.199":
   version "0.0.199"
   resolved "https://registry.yarnpkg.com/@vx/text/-/text-0.0.199.tgz#5d4fd172a7e1f5cc1d8ad6c175d816d6e9aa654f"
   integrity sha512-YUIkATaN+GEyiyfMsMN3VqopmOHFjPZe2AtXPnIhjrLfOY/SjpPqqT7L2S3pgGbqZYiJbZd9VzGxXYXRtGZOzw==
