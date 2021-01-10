@@ -24,14 +24,16 @@ Provide a data insight visualisation from raw posts data which contain AI-based 
 ## Deliverables
 - [x] create project structure and page layout (completed)
 - [x] add apollo graphql react connector (completed)
-- [ ] build data manipulation flow (in progress: 70%)
-- [ ] build insight visualisation (in progress: dummy chart placeholder created)
+- [x] build data manipulation flow (completed)
+- [x] build insight visualisation (completed)
+- [x] show detail in tooltip when hovering elements (completed) 
 - [ ] add data filter flow (not started)
 
 ## Challenges
 For me the most challenging parts I faced were:
 - as my understanding of the data is limited, I was thinking of what data insight I should visualise, e.g. should I use the likelyhood of each topic as score to be sum aggregating the data or should I just count the topics and validate them by a certain likelyhood threshold.
 - another challenge I faced was learning VX and date-fns on the go.
+- while experimenting with VX library, I found that the configurattion is coupled closely with a specific data format. I needed to create a workaround to achieve what I wanted.
 
 ## Feedback for API
 - it'll be useful to add other type of posts queries, e.g. postsByDateRange and postsByAuthor
