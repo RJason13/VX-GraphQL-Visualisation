@@ -10,7 +10,7 @@ import { OverridableComponent } from '@material-ui/core/OverridableComponent';
 const NonWrappingToolbar = styled(Toolbar)<{ component: keyof HTMLElementTagNameMap }>`
     align-items: flex-start;
     overflow: hidden;
-    height: 7.5em;
+    height: 5.5em;
     padding: 0;
     backdrop-filter: saturate(1.8) blur(${({theme}) => theme.spacing(2.5)}px);
     background-color: ${({theme}) => theme.palette.type === 'light' ? 'rgba(245, 245, 247, 0.6)' : 'rgba(29, 29, 31, 0.6)'};
@@ -31,7 +31,7 @@ const StyledContainer = styled(Box)<{ component: keyof HTMLElementTagNameMap, re
     overflow-x: auto;
     text-align: center;
     white-space: nowrap;
-    padding-top: 1.25em;
+    padding-top: 1em;
     padding-bottom: 4em;
     scroll-behavior: smooth;
 
@@ -107,7 +107,7 @@ const PageNavbar: FC<PageNavbarProps> = ({ links }) => {
             if (croppedLeftChild.offsetLeft - marginLeft + croppedLeftChild.clientWidth > scrollLeft) break;
             croppedLeftChild = childNodes[i] as HTMLLIElement;
         }
-        let childToScroll = childNodes[i-1] as HTMLLIElement;
+        let childToScroll = (childNodes[i-1] || childNodes[0]) as HTMLLIElement;
         for (let j = i - 1;j >= 0;j--) {
             const currentChild = childNodes[j] as HTMLLIElement;
             if (currentChild.offsetLeft < croppedLeftChild.offsetLeft + croppedLeftChild.clientWidth - clientWidth) break;
@@ -158,7 +158,7 @@ const PageNavbar: FC<PageNavbarProps> = ({ links }) => {
                         return (
                             <Box component="li" key={uri}>
                                 <PageNavbarLink to={uri}>
-                                    { icon ? <SvgIcon fontSize="large" component={icon} /> : <Avatar />}
+                                    { icon ? <SvgIcon fontSize="small" component={icon} /> : <Avatar />}
                                     <Typography variant='caption' children={title} />
                                 </PageNavbarLink>
                             </Box>

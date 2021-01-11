@@ -152,23 +152,6 @@ export type Subscription = {
   todoAdded?: Maybe<Todo>;
 };
 
-export type AllPostsTopicsQueryVariables = Exact<{
-  count: Scalars['Int'];
-}>;
-
-
-export type AllPostsTopicsQuery = (
-  { __typename?: 'Query' }
-  & { allPosts?: Maybe<Array<Maybe<(
-    { __typename?: 'Post' }
-    & Pick<Post, 'published' | 'createdAt'>
-    & { likelyTopics?: Maybe<Array<Maybe<(
-      { __typename?: 'Topic' }
-      & Pick<Topic, 'label' | 'likelihood'>
-    )>>> }
-  )>>> }
-);
-
 export type AllPostsQueryVariables = Exact<{
   count: Scalars['Int'];
 }>;
@@ -184,7 +167,7 @@ export type AllPostsQuery = (
       & Pick<Topic, 'label' | 'likelihood'>
     )>>>, author: (
       { __typename?: 'User' }
-      & Pick<User, 'id'>
+      & Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'avatar'>
     ) }
   )>>> }
 );
@@ -216,44 +199,6 @@ export type UserQuery = (
 );
 
 
-export const AllPostsTopicsDocument = gql`
-    query AllPostsTopics($count: Int!) {
-  allPosts(count: $count) {
-    published
-    createdAt
-    likelyTopics {
-      label
-      likelihood
-    }
-  }
-}
-    `;
-
-/**
- * __useAllPostsTopicsQuery__
- *
- * To run a query within a React component, call `useAllPostsTopicsQuery` and pass it any options that fit your needs.
- * When your component renders, `useAllPostsTopicsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAllPostsTopicsQuery({
- *   variables: {
- *      count: // value for 'count'
- *   },
- * });
- */
-export function useAllPostsTopicsQuery(baseOptions: Apollo.QueryHookOptions<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>) {
-        return Apollo.useQuery<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>(AllPostsTopicsDocument, baseOptions);
-      }
-export function useAllPostsTopicsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>) {
-          return Apollo.useLazyQuery<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>(AllPostsTopicsDocument, baseOptions);
-        }
-export type AllPostsTopicsQueryHookResult = ReturnType<typeof useAllPostsTopicsQuery>;
-export type AllPostsTopicsLazyQueryHookResult = ReturnType<typeof useAllPostsTopicsLazyQuery>;
-export type AllPostsTopicsQueryResult = Apollo.QueryResult<AllPostsTopicsQuery, AllPostsTopicsQueryVariables>;
 export const AllPostsDocument = gql`
     query AllPosts($count: Int!) {
   allPosts(count: $count) {
@@ -267,6 +212,10 @@ export const AllPostsDocument = gql`
     }
     author {
       id
+      firstName
+      lastName
+      email
+      avatar
     }
   }
 }

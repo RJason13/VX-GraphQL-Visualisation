@@ -79,7 +79,7 @@ const HorizontalBarGroupChart = withTooltip<BarGroupHorizontalProps, TooltipData
   const yMax = height - margin.top - margin.bottom;
 
   // scales
-  const groupScale = scaleBand({ domain: data.map(getGroup), padding: 0.2 });
+  const groupScale = scaleBand({ domain: data.map(getGroup), padding: 0.1 });
   const subgroupScale = scaleBand({ domain: subgroupDomain, padding: 0.1 });
   const scoreScale = scaleLinear<number>({ domain: scoreDomain });
   const colorScale = scaleOrdinal<string, string>({ domain: colorDomain, range: colorScheme });
@@ -109,21 +109,24 @@ const HorizontalBarGroupChart = withTooltip<BarGroupHorizontalProps, TooltipData
       const group = groupScale.domain()[groupIndex];
       const subgroupIndex = Math.floor((correctedY - (groupScale(group) as number)) / subgroupBand);
       const subgroup = subgroupScale.domain()[subgroupIndex];
+      
+      if (!subgroup) return;
 
       const label = getLabel(subgroup, groupIndex);
+
+      if (!label) return;
+      
       const barColor = colorScale(label);
-      if (label) {
-        showTooltip({
-          tooltipData: {
-            label,
-            color: barColor,
-            group,
-            score: data[groupIndex][subgroup]
-          },
-          tooltipLeft: x,
-          tooltipTop: y,
-        });
-      }
+      showTooltip({
+        tooltipData: {
+          label,
+          color: barColor,
+          group,
+          score: data[groupIndex][subgroup]
+        },
+        tooltipLeft: x,
+        tooltipTop: y,
+      });
     },
     [colorScale, data, getLabel, groupScale, margin.top, showTooltip, subgroupScale],
   );

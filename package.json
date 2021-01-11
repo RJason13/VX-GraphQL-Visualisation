@@ -28,6 +28,7 @@
     "@vx/event": "^0.0.199",
     "@vx/group": "^0.0.199",
     "@vx/mock-data": "^0.0.199",
+    "@vx/responsive": "^0.0.199",
     "@vx/scale": "^0.0.199",
     "@vx/shape": "^0.0.199",
     "@vx/text": "^0.0.199",
