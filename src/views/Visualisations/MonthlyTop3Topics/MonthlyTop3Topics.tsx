@@ -22,7 +22,7 @@ const format = timeFormat('%b %Y');
 const formatDate = (date: Date) => format(date);
 // TODO: add comments to codes
 const ChartExample: FC = () => {
-    const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 10000 }});
+    const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 5000 }});
 
     // TODO: use a proper data changed indicator
     const data = useMemo(() => {

@@ -65,7 +65,7 @@ const getValue = (d: TopicDataEntry) => d.score;
 const AuthorProfile: FC = () => {
     const [authorId, setAuthorId] = useState<string | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 1000 }});
+    const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 5000 }});
     // TODO: use a proper data changed indicator
     const data = useMemo(() => {
         if (!allPostsData) return null;
