@@ -26,7 +26,6 @@ type BarGroupHorizontalProps = {
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
-  events?: boolean;
   getGroup: (d: any) => string;
   subgroupDomain: string[];
   scoreDomain: [number, number];
@@ -58,7 +57,6 @@ const HorizontalBarGroupChart = withTooltip<BarGroupHorizontalProps, TooltipData
   width,
   height,
   margin = defaultMargin,
-  events = false,
   getGroup,
   getLabel,
   subgroupDomain,
@@ -165,9 +163,6 @@ const HorizontalBarGroupChart = withTooltip<BarGroupHorizontalProps, TooltipData
                           height={bar.height}
                           fill={barColor}
                           rx={4}
-                          onClick={() => {
-                            if (events) alert(`${bar.key} (${bar.value}) - ${JSON.stringify(bar)}`);
-                          }}
                           onTouchStart={handleTooltip}
                           onTouchMove={handleTooltip}
                           onMouseMove={handleTooltip}

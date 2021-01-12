@@ -1,5 +1,5 @@
 import { Box, CircularProgress, Container, Typography } from "@material-ui/core";
-import BarGroupChart from "components/HorizontalBarGroupChart";
+import HorizontalBarGroupChart from "components/HorizontalBarGroupChart";
 import { useAllPostsQuery } from "graphql/types-and-hooks";
 import React, { FC, useMemo } from "react";
 import styled from "styled-components";
@@ -71,7 +71,7 @@ const ChartExample: FC = () => {
                         <Typography variant="h6">No data</Typography> :
                         <ParentSize debounceTime={10}>
                             {({ width: visWidth }) => (
-                                <BarGroupChart width={visWidth} height={data.length * 100} 
+                                <HorizontalBarGroupChart width={visWidth} height={data.length * 100} 
                                     getGroup={(d: GroupData) => d.group}
                                     getLabel={(key: string, index: number) => labelMap[index][parseInt(key)]}
                                     scoreDomain={[0, scoreMax]} 

@@ -1,13 +1,15 @@
-import { Avatar, Box, Button, CircularProgress, Container, Toolbar, Typography } from "@material-ui/core";
+import { Avatar, Box, Button, CircularProgress, Container, Grid, Toolbar, Typography, useMediaQuery } from "@material-ui/core";
 import { ExpandLess, ExpandMore } from "@material-ui/icons";
+import { ParentSize } from "@vx/responsive";
 import AuthorSelectionDialog from "components/AuthorSelectionDialog";
 import { AuthorData } from "components/AuthorSelectionDialog/AuthorSelectionDialog"
+import HorizontalBarChart from "components/HorizontalBarChart";
 import { rollups } from "d3-array";
 import { timeFormat, timeParse } from "d3-time-format";
 import { useAllPostsQuery } from "graphql/types-and-hooks";
-import { fromPairs, omit, sortBy, toPairs } from "lodash";
+import { fromPairs, omit, orderBy, sortBy, toPairs } from "lodash";
 import React, { FC, useMemo, useState } from "react";
-import styled from "styled-components";
+import styled, { DefaultTheme } from "styled-components";
 
 type TopicsMap = {
     [label: string]: number
@@ -23,6 +25,11 @@ type AuthorsData = {
         author: AuthorData;
         data: MonthData[]
     }
+}
+
+type OverallTopicEntry = {
+    group: string;
+    score: number;
 }
 
 // sub components
@@ -56,15 +63,6 @@ const AuthorProfile: FC = () => {
     const [authorId, setAuthorId] = useState<string | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const {loading, error, data: allPostsData} = useAllPostsQuery({ variables: { count: 1000 }});
-
-    const handleClickOpen = () => {
-      setDialogOpen(true);
-    };
-  
-    const handleClose = (value: string | null) => {
-      setDialogOpen(false);
-      setAuthorId(value);
-    };
     // TODO: use a proper data changed indicator
     const data = useMemo(() => {
         if (!allPostsData) return null;
@@ -98,8 +96,29 @@ const AuthorProfile: FC = () => {
         return fromPairs(authorsArr) as AuthorsData;
     }, [allPostsData]);
 
-    const authors = useMemo(() => !data ? [] : toPairs(data).map(x => x[1].author), [data]);
+    const authors = useMemo(() => data ? toPairs(data).map(x => x[1].author) : [], [data]);
     const currentAuthor = useMemo(() => ((data && authorId && data[authorId]) ? data[authorId].author : null), [authorId, data]);
+    const authorData = useMemo(() => data && authorId ? data[authorId].data : [], [authorId, data]);
+    const isXsDown = useMediaQuery((theme: DefaultTheme) => theme.breakpoints.down('xs'));
+
+    const overallTopicsData = useMemo(() => {
+        const topics: { [key: string]: number } = {};
+        authorData.forEach((monthData) => {
+            Object.entries(monthData.topics).forEach(([key, value]) => {
+                topics[key] = (topics[key] || 0) + value;
+            });
+        });
+        return orderBy(Object.entries(topics).map(([key, value]) => ({ group: key, score: value })), ['score'], ['desc']);
+    }, [authorData]);
+
+    const handleClickOpen = () => {
+      setDialogOpen(true);
+    };
+  
+    const handleClose = (value: string | null) => {
+      setDialogOpen(false);
+      setAuthorId(value);
+    };
 
     return (
         <StyledContainer maxWidth="md">
@@ -127,21 +146,37 @@ const AuthorProfile: FC = () => {
                 <Box py={4}><CircularProgress /></Box> :
                 (error ? 
                     <Typography variant="h6">Something wrong has happened</Typography> :
-                    null
-                    // (!data || data.length === 0 ? 
-                    //     <Typography variant="h6">No data</Typography> :
-                    //     <ParentSize debounceTime={10}>
-                    //         {({ width: visWidth }) => (
-                    //             <BarGroupChart width={visWidth} height={data.length * 100} 
-                    //                 getGroup={(d: GroupData) => d.group}
-                    //                 getLabel={(key: string, index: number) => labelMap[index][parseInt(key)]}
-                    //                 scoreDomain={[0, scoreMax]} 
-                    //                 subgroupDomain={range(3).map(x => x.toString())}
-                    //                 colorDomain={colorDomain}
-                    //                 data={data.map(x => ({ group: x.group, ...Object.assign({}, x.topics.map(x=>x.score)) }))} />
-                    //         )}
-                    //     </ParentSize>
-                    // )
+                    (!authorData || authorData.length === 0 ? 
+                        <Typography variant="h6">No data</Typography> :
+                        <Grid container direction={isXsDown ? 'column' : 'row'} spacing={2}>
+                            <Grid item xs={12} sm={4}>
+                                <Typography variant='h6'>
+                                    Overall Topics Rank
+                                </Typography>
+                                <ParentSize debounceTime={10}>
+                                    {({ width: visWidth }) => (
+                                         <HorizontalBarChart<OverallTopicEntry> width={visWidth} height={authorData.length * 30} 
+                                            getGroup={(d) => d.group}
+                                            getValue={(d) => d.score}
+                                            data={overallTopicsData} />
+                                     )}
+                                </ParentSize>
+                            </Grid>
+                            <Grid item xs={12} sm={8}>
+                                <Typography variant='h6'>
+                                    Topic Scores Over Time
+                                </Typography>
+                                {/* <ParentSize debounceTime={10}>
+                                    {({ width: visWidth }) => (
+                                         <HorizontalBarChart<OverallTopicEntry> width={visWidth} height={authorData.length * 30} 
+                                            getGroup={(d) => d.group}
+                                            getValue={(d) => d.score}
+                                            data={overallTopicsData} />
+                                     )}
+                                </ParentSize> */}
+                            </Grid>
+                        </Grid>
+                    )
                 )
             }
         </StyledContainer>
