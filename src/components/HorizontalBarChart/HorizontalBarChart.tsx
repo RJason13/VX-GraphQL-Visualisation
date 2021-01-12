@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { BarGroupHorizontal, Bar } from '@vx/shape';
+import React, { useCallback, useMemo } from 'react';
+import { Bar } from '@vx/shape';
 import { Group } from '@vx/group';
 import { Text } from '@vx/text';
 import { AxisLeft } from '@vx/axis';
@@ -7,7 +7,7 @@ import { scaleBand, scaleLinear, scaleOrdinal } from '@vx/scale';
 import { schemeDark2, schemePaired, schemeCategory10, schemeAccent } from 'd3-scale-chromatic';
 import { round, uniq } from 'lodash';
 import styled, { useTheme } from 'styled-components';
-import { defaultStyles, Tooltip, useTooltip, withTooltip } from '@vx/tooltip';
+import { defaultStyles, Tooltip, useTooltip } from '@vx/tooltip';
 import { localPoint } from '@vx/event';
 import { max } from 'd3-array';
 
@@ -23,13 +23,15 @@ type TooltipData = {
   score: number;
 };
 
-type BarHorizontalProps<T> = {
+type HorizontalBarChartProps<T> = {
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
   getGroup: (d: T) => string;
   getValue: (d: T) => number;
   data: T[];
+  colorDomain?: string[];
+  background?: string;
 };
 
 const colorScheme = uniq([
@@ -39,9 +41,8 @@ const colorScheme = uniq([
   ...schemeAccent
 ]);
 
-const axisColor = '#e5fd3d';
-const background = '#612efb';
-const defaultMargin = { top: 20, right: 20, bottom: 20, left: 20 };
+const axisColor = 'black';
+const defaultMargin = { top: 20, right: 20, bottom: 20, left: 50 };
 const tooltipStyles = {
   ...defaultStyles,
   minWidth: 60,
@@ -57,8 +58,10 @@ const HorizontalBarGroupChart = <T extends object>({
   margin = defaultMargin,
   getGroup,
   getValue,
-  data
-}: BarHorizontalProps<T>) => {
+  data,
+  colorDomain,
+  background = 'transparent'
+}: HorizontalBarChartProps<T>) => {
   const theme = useTheme();
   const {
     tooltipOpen,
@@ -74,14 +77,13 @@ const HorizontalBarGroupChart = <T extends object>({
   const yMax = height - margin.top - margin.bottom;
 
   // scales
-  const groupScale = scaleBand({ domain: data.map(getGroup), padding: 0.2 });
-  const scoreScale = scaleLinear<number>({ domain: [0, max(data, getValue) || 0] });
-  const colorScale = scaleOrdinal<string, string>({ domain: data.map(getGroup), range: colorScheme });
-
-  // update scale output dimensions
+  const groupScale = useMemo(() => scaleBand({ domain: data.map(getGroup), padding: 0.2 }), [data, getGroup]);
   groupScale.rangeRound([0, yMax]);
+  const scoreScale = useMemo(() => scaleLinear<number>({ domain: [0, max(data, getValue) || 0] }), [data, getValue]);
   scoreScale.rangeRound([0, xMax]);
-
+  const colorScale = useMemo(() => scaleOrdinal<string, string>({ domain: colorDomain || data.map(getGroup), range: colorScheme }), [colorDomain, data, getGroup]);
+  const axisScale = useMemo(() => groupScale.copy().domain(groupScale.domain().map((x,i) => `${i+1}.`)),[groupScale]);
+  
   // callbacks
   const timeoutHideTooltip = useCallback(() => {
     tooltipTimeout = window.setTimeout(() => {
@@ -160,11 +162,22 @@ const HorizontalBarGroupChart = <T extends object>({
               )
             })
           }
+          <AxisLeft
+            scale={axisScale}
+            hideTicks
+            hideAxisLine
+            tickLabelProps={() => ({
+              fill: axisColor,
+              fontSize: 11,
+              textAnchor: 'end',
+              dy: '0.33em',
+            })}
+          />
         </Group>
       </svg>
       {tooltipOpen && tooltipData && (
         <Tooltip top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
-          <div style={{ color: colorScale(tooltipData.color) }}>
+          <div style={{ color: tooltipData.color }}>
             <strong>{tooltipData.label}</strong>
           </div>
           <div>{`score: ${round(tooltipData.score, 2)}`}</div>

@@ -4,6 +4,7 @@ import { ParentSize } from "@vx/responsive";
 import AuthorSelectionDialog from "components/AuthorSelectionDialog";
 import { AuthorData } from "components/AuthorSelectionDialog/AuthorSelectionDialog"
 import HorizontalBarChart from "components/HorizontalBarChart";
+import LineChart from "components/LineChart";
 import { rollups } from "d3-array";
 import { timeFormat, timeParse } from "d3-time-format";
 import { useAllPostsQuery } from "graphql/types-and-hooks";
@@ -27,7 +28,7 @@ type AuthorsData = {
     }
 }
 
-type OverallTopicEntry = {
+type TopicDataEntry = {
     group: string;
     score: number;
 }
@@ -58,6 +59,8 @@ const StyledButtonCircularProgress = styled(CircularProgress)`
 const parseDate = timeParse('%b %Y');
 const format = timeFormat('%b %Y');
 const formatDate = (date: Date) => format(date);
+const getGroup = (d: TopicDataEntry) => d.group;
+const getValue = (d: TopicDataEntry) => d.score;
 
 const AuthorProfile: FC = () => {
     const [authorId, setAuthorId] = useState<string | null>(null);
@@ -88,7 +91,7 @@ const AuthorProfile: FC = () => {
             return {
                 author: omit(authorPosts[0]?.author, "__typename"),
                 data: monthData
-                    .sort((a,b) => (parseDate(b[0]) as Date).getTime() - (parseDate(a[0]) as Date).getTime())
+                    .sort((a,b) => (parseDate(a[0]) as Date).getTime() - (parseDate(b[0]) as Date).getTime())
                     .map(x => ({ group: x[0], topics: x[1] }))
             };
         }, (post) => post?.author.id);
@@ -101,15 +104,23 @@ const AuthorProfile: FC = () => {
     const authorData = useMemo(() => data && authorId ? data[authorId].data : [], [authorId, data]);
     const isXsDown = useMediaQuery((theme: DefaultTheme) => theme.breakpoints.down('xs'));
 
-    const overallTopicsData = useMemo(() => {
-        const topics: { [key: string]: number } = {};
+    const topicsMonthlyData = useMemo(() => {
+        const topics: { [topic: string]: TopicDataEntry[] } = {};
         authorData.forEach((monthData) => {
-            Object.entries(monthData.topics).forEach(([key, value]) => {
-                topics[key] = (topics[key] || 0) + value;
+            Object.entries(monthData.topics).forEach(([topic, value]) => {
+                topics[topic] = topics[topic] || [];
+                topics[topic].push({ group: monthData.group, score: value});
             });
         });
-        return orderBy(Object.entries(topics).map(([key, value]) => ({ group: key, score: value })), ['score'], ['desc']);
+        return topics;
     }, [authorData]);
+    
+    const overallTopicsData = useMemo(() => orderBy(
+        Object.entries(topicsMonthlyData).map(([topic, monthlyValues]) => ({ group: topic, score: monthlyValues.reduce((t,x) => t + x.score,0) })),
+        ['score'],
+        ['desc']
+    ), [topicsMonthlyData]);
+    const colorDomain = useMemo(() => overallTopicsData.map(getGroup), [overallTopicsData])
 
     const handleClickOpen = () => {
       setDialogOpen(true);
@@ -120,6 +131,7 @@ const AuthorProfile: FC = () => {
       setAuthorId(value);
     };
 
+    console.log(colorDomain)
     return (
         <StyledContainer maxWidth="md">
             <Box py={2}>
@@ -149,31 +161,37 @@ const AuthorProfile: FC = () => {
                     (!authorData || authorData.length === 0 ? 
                         <Typography variant="h6">No data</Typography> :
                         <Grid container direction={isXsDown ? 'column' : 'row'} spacing={2}>
-                            <Grid item xs={12} sm={4}>
+                            <Grid item xs={12} sm={3}>
                                 <Typography variant='h6'>
                                     Overall Topics Rank
                                 </Typography>
                                 <ParentSize debounceTime={10}>
                                     {({ width: visWidth }) => (
-                                         <HorizontalBarChart<OverallTopicEntry> width={visWidth} height={authorData.length * 30} 
-                                            getGroup={(d) => d.group}
-                                            getValue={(d) => d.score}
-                                            data={overallTopicsData} />
+                                        <HorizontalBarChart<TopicDataEntry>
+                                            width={visWidth}
+                                            height={authorData.length * 30} 
+                                            getGroup={getGroup}
+                                            getValue={getValue}
+                                            data={overallTopicsData}
+                                            colorDomain={colorDomain} />
                                      )}
                                 </ParentSize>
                             </Grid>
-                            <Grid item xs={12} sm={8}>
+                            <Grid item xs={12} sm={9}>
                                 <Typography variant='h6'>
                                     Topic Scores Over Time
                                 </Typography>
-                                {/* <ParentSize debounceTime={10}>
+                                <ParentSize debounceTime={10}>
                                     {({ width: visWidth }) => (
-                                         <HorizontalBarChart<OverallTopicEntry> width={visWidth} height={authorData.length * 30} 
-                                            getGroup={(d) => d.group}
-                                            getValue={(d) => d.score}
-                                            data={overallTopicsData} />
+                                        <LineChart<TopicDataEntry>
+                                            width={visWidth}
+                                            height={authorData.length * 30}  
+                                            getX={getGroup}
+                                            getY={getValue}
+                                            data={topicsMonthlyData}
+                                            colorDomain={colorDomain} />
                                      )}
-                                </ParentSize> */}
+                                </ParentSize>
                             </Grid>
                         </Grid>
                     )

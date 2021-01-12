@@ -7,7 +7,7 @@ import { scaleBand, scaleLinear, scaleOrdinal } from '@vx/scale';
 import { schemeDark2, schemePaired, schemeCategory10, schemeAccent } from 'd3-scale-chromatic';
 import { round, uniq } from 'lodash';
 import { useTheme } from 'styled-components';
-import { defaultStyles, Tooltip, withTooltip } from '@vx/tooltip';
+import { defaultStyles, Tooltip, useTooltip } from '@vx/tooltip';
 import { localPoint } from '@vx/event';
 
 export type GroupData = {
@@ -22,7 +22,7 @@ type TooltipData = {
   score: number;
 };
 
-type BarGroupHorizontalProps = {
+type HorizontalBarGroupChartProps = {
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
@@ -32,6 +32,7 @@ type BarGroupHorizontalProps = {
   data: any[];
   getLabel: (key: string, index: number) => string;
   colorDomain: string[];
+  background?: string;
 };
 
 const colorScheme = uniq([
@@ -41,8 +42,7 @@ const colorScheme = uniq([
   ...schemeAccent
 ]);
 
-const axisColor = '#e5fd3d';
-const background = '#612efb';
+const axisColor = 'black';
 const defaultMargin = { top: 20, right: 20, bottom: 20, left: 70 };
 const tooltipStyles = {
   ...defaultStyles,
@@ -53,7 +53,7 @@ const tooltipStyles = {
   
 let tooltipTimeout: number;
 
-const HorizontalBarGroupChart = withTooltip<BarGroupHorizontalProps, TooltipData>(({
+const HorizontalBarGroupChart = ({
   width,
   height,
   margin = defaultMargin,
@@ -63,14 +63,17 @@ const HorizontalBarGroupChart = withTooltip<BarGroupHorizontalProps, TooltipData
   scoreDomain,
   data,
   colorDomain,
-  tooltipOpen,
-  tooltipLeft,
-  tooltipTop,
-  tooltipData,
-  hideTooltip,
-  showTooltip
-}) => {
+  background = 'transparent'
+}: HorizontalBarGroupChartProps) => {
   const theme = useTheme();
+  const {
+    tooltipOpen,
+    tooltipLeft,
+    tooltipTop,
+    tooltipData,
+    hideTooltip,
+    showTooltip
+  } = useTooltip<TooltipData>();
 
   // bounds
   const xMax = width - margin.left - margin.right;
@@ -215,6 +218,6 @@ const HorizontalBarGroupChart = withTooltip<BarGroupHorizontalProps, TooltipData
       )}
     </div>
   );
-});
+};
 
 export default HorizontalBarGroupChart;
