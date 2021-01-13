@@ -4,7 +4,7 @@ import { Group } from '@vx/group';
 import { AxisBottom } from '@vx/axis';
 import { scaleLinear, scaleOrdinal, scalePoint } from '@vx/scale';
 import { schemeDark2, schemePaired, schemeCategory10, schemeAccent } from 'd3-scale-chromatic';
-import { round, uniq } from 'lodash';
+import { orderBy, round, uniq } from 'lodash';
 import styled, { DefaultTheme } from 'styled-components';
 import { defaultStyles, Tooltip, useTooltip } from '@vx/tooltip';
 import { localPoint } from '@vx/event';
@@ -85,8 +85,9 @@ const LineChart = <T extends object>({
   // scales
   const xScale = useMemo(() => scalePoint({ domain: merge<string>(Object.values(data).map((seriesData) => seriesData.map(getX))) }), [data, getX]);
   xScale.rangeRound([0, xMax]);
+  console.log(Math.ceil(max(Object.values(data).flat().map(getY)) || 0))
   const yScale = useMemo(() => scaleLinear<number>({ domain: [0, max(Object.values(data).flat().map(getY)) || 0] }), [data, getY]);
-  yScale.rangeRound([0, yMax]);
+  yScale.rangeRound([yMax, 0]);
   const colorScale = useMemo(() => scaleOrdinal<string, string>({ domain: colorDomain || Object.keys(data), range: colorScheme }), [colorDomain, data]);
   
   // callbacks
@@ -109,11 +110,11 @@ const LineChart = <T extends object>({
       
       if (!nearestX) return;
 
-      const tooltipSeriesData = Object.entries(data).map(([series, seriesData]) => ({
+      const tooltipSeriesData = orderBy(Object.entries(data).map(([series, seriesData]) => ({
         series,
         color: colorScale(series),
         score: getY(seriesData.find(seriesMonthData => getX(seriesMonthData) === nearestX) as T)
-      }))
+      })), ['score'], ['desc'])
       
       showTooltip({
         tooltipData: {
