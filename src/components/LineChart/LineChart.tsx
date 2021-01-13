@@ -146,8 +146,7 @@ const LineChart = <T extends object>({
                     x={d => xScale(getX(d)) || 0}
                     y={d => yScale(getY(d)) || 0}
                     stroke={colorScale(series)}
-                    strokeWidth={1}
-                    strokeOpacity={1}
+                    strokeWidth={2}
                     shapeRendering="geometricPrecision"
                     markerMid="url(#marker-circle)" />
               </Group>
